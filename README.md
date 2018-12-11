@@ -10,8 +10,8 @@ This is my implementation of A* pathfinding algorithm in pygame. You can downloa
 To go to the next stage all you have to do is press SPACE.
 When the game is over you can press SPACE one more time to restart the game or exit by closing the game.
 
-### You can modify:
-* Speed of the AI game by passing diffrent argument when creating instance of Game class
+### You can modify by passing diffrent arguments when creating instance of Game class:
+* Speed of the AI game 
 
 * If you want to play by yourself or you want to watch AI
 
