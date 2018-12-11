@@ -1,6 +1,7 @@
 import pygame
 from node import Node, Superior
 from random import randrange
+import atexit
 
 class Game():
 
@@ -19,6 +20,7 @@ class Game():
         self.display = pygame.display.set_mode((boundary, boundary))
         self.show_g_and_h_cost = g_and_h_cost
         self.show_f_cost = f_cost
+        atexit.register(self.cleanup)
     
     def create_grid(self, amount, size):
         grid = list()
@@ -81,8 +83,8 @@ class Game():
                 
         pygame.display.update()
 
-    def checkNeighbors(self, grid, cell:Node, from_starting_node=False):
-        found = bool()        
+    def checkNeighbors(self, grid, cell: Node):
+        found = bool()
         
         # Top node
         if not cell.is_in_first_row:
@@ -94,10 +96,11 @@ class Game():
                     neighbor.set_h_cost()
                     neighbor.f_cost = neighbor.g_cost + neighbor.h_cost
                     neighbor.parent_node = cell
-            
+
             # Look for end node
             if neighbor.is_end_node:
-                cell.set_as_route()
+                neighbor.parent_node = cell
+                neighbor.set_as_route()
                 found = True
                 
         # Bottom node
@@ -113,7 +116,8 @@ class Game():
             
             # Look for end node
             if neighbor.is_end_node:
-                cell.set_as_route()
+                neighbor.parent_node = cell
+                neighbor.set_as_route()
                 found = True
 
         # Left node
@@ -129,7 +133,8 @@ class Game():
             
             # Look for end node
             if neighbor.is_end_node:
-                cell.set_as_route()
+                neighbor.parent_node = cell
+                neighbor.set_as_route()
                 found = True
 
         # Right node
@@ -145,7 +150,8 @@ class Game():
             
             # Look for end node
             if neighbor.is_end_node:
-                cell.set_as_route()
+                neighbor.parent_node = cell
+                neighbor.set_as_route()
                 found = True
         
         # Top left node
@@ -161,7 +167,8 @@ class Game():
             
             # Look for end node
             if neighbor.is_end_node:
-                cell.set_as_route()
+                neighbor.parent_node = cell
+                neighbor.set_as_route()
                 found = True
         
         # Top right node
@@ -177,7 +184,8 @@ class Game():
             
             # Look for end node
             if neighbor.is_end_node:
-                cell.set_as_route()
+                neighbor.parent_node = cell
+                neighbor.set_as_route()
                 found = True
         
         # Bottom left node
@@ -193,7 +201,8 @@ class Game():
             
             # Look for end node 
             if neighbor.is_end_node:
-                cell.set_as_route()
+                neighbor.parent_node = cell
+                neighbor.set_as_route()
                 found = True
         
         # Bottom right node
@@ -209,7 +218,8 @@ class Game():
             
             # Look for end node
             if neighbor.is_end_node:
-                cell.set_as_route()
+                neighbor.parent_node = cell
+                neighbor.set_as_route()
                 found = True
 
         return found
@@ -221,11 +231,25 @@ class Game():
 
         for row in grid:
             for cell in row:
-                # Check nodes
-                if not cell.discovered or cell.is_end_node or cell.is_start_node or cell.is_clicked: continue
                 
+                #Check if cell is end cell (when start node and end node are next to each other)
+                if cell.is_end_node:
+                    row_diffrence = cell.end_node.row - Superior.start_node.row
+                    column_difference = cell.end_node.column - Superior.start_node.column
+
+                    if row_diffrence < 0: 
+                        row_diffrence = -row_diffrence
+                    if column_difference < 0: 
+                        column_difference = -column_difference
+                    
+                    if row_diffrence == 1 and column_difference == 1:
+                        return cell
+                
+                # Check nodes
+                if not cell.discovered or cell.is_start_node or cell.is_clicked: continue
+
                 # Set first value
-                if counter == 0: 
+                if counter == 0:
                     lowest_f = cell.f_cost
                     counter += 1
 
@@ -240,11 +264,11 @@ class Game():
         random = randrange(0, len(cells_with_lowest_f))
         return cells_with_lowest_f[random]
         
-    def play(self):
+    def main_loop(self):
         grid = self.create_grid(self.amount, self.size)
         self.show_grid(grid)
         
-        exit_program = False
+        exit_game = False
 
         # Stage indicators
         stages = ("Start node placement", "End node placement", "Walls placement", "Game")
@@ -256,11 +280,12 @@ class Game():
 
         print(f"Stage: {stages[stage]}")
 
-        while not exit_program:
+        while not exit_game:
             for event in pygame.event.get():
                 # Check if user wants to quit the game
                 if event.type == pygame.QUIT:
-                    exit_program = True
+                    exit_game = True
+                    self.cleanup()
                 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     mouse_position = pygame.mouse.get_pos()
@@ -327,7 +352,7 @@ class Game():
 
                 # Move to next stage
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE and stage != 3:
+                    if event.key == pygame.K_SPACE and stage < 3:
                         stage += 1
                         print(f"Stage: {stages[stage]}")
 
@@ -341,7 +366,10 @@ class Game():
                             # If AI mode is on change FPS
                             if self.AI:
                                 self.FPS = self.AI_speed
-            
+                    elif event.key == pygame.K_SPACE and stage == 4:
+                        exit_game = True
+                        Superior().reset()
+                        
             # Place walls
             if mouse_pressed:
                 mouse_position = pygame.mouse.get_pos()
@@ -365,7 +393,16 @@ class Game():
                     print("There is no route!")
                     continue
 
+                # Pick node
                 node = self.pick_node(grid)
+                
+                # Checl if node is end node
+                if cell.is_end_node:
+                    stage += 1
+                    self.FPS = 30
+                    print("Route found!")
+                
+                # Move one step
                 node.is_clicked = True
                 found = self.checkNeighbors(grid, node)
                 
@@ -380,10 +417,16 @@ class Game():
             self.show_grid(grid)
             self.clock.tick(self.FPS)
 
+    def play(self):
+        while True:
+            self.main_loop()
+
+    @staticmethod
+    def cleanup():
         pygame.quit()
         quit()
 
 if __name__ == "__main__":
-    game = Game(40, 10, g_and_h_cost=True, f_cost=True)
+    game = Game(20, 30, speed=30)
     game.play()
     

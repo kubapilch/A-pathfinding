@@ -6,6 +6,13 @@ class Superior():
 
     # Node that has the smallest g cost to the node
     parent_node = None
+
+    @classmethod
+    def reset(cls):
+        cls.end_node = None
+        cls.start_node = None
+        cls.number_of_undiscovered = int()
+        cls.parent_node = None
     
 
 class Node(Superior):
