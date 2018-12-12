@@ -397,7 +397,7 @@ class Game():
                 node = self.pick_node(grid)
                 
                 # Checl if node is end node
-                if cell.is_end_node:
+                if node.is_end_node:
                     stage += 1
                     self.FPS = 30
                     print("Route found!")
