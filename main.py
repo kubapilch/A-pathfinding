@@ -277,6 +277,7 @@ class Game():
         # Drawing variables
         mouse_pressed = False
         highlighted_cells = []
+        drawing_type = int()
 
         print(f"Stage: {stages[stage]}")
 
@@ -333,6 +334,14 @@ class Game():
                     # Start drawing
                     if stage == 2:
                         mouse_pressed = True
+                        for row in grid:
+                            for cell in row:
+                                if cell.is_in_range(x=mouse_position[0], y=mouse_position[1]) and not cell.is_start_node and not cell.is_end_node:
+                                    if cell.is_walkable:
+                                        drawing_type = 1 # Placing walls
+                                    else:
+                                        drawing_type = 0 # Deleting walls
+                        
 
                     # Step on cell
                     if stage == 3:
@@ -349,6 +358,7 @@ class Game():
                 if event.type == pygame.MOUSEBUTTONUP and stage == 2:
                     mouse_pressed = False
                     highlighted_cells = []
+                    drawing_type = int()
 
                 # Move to next stage
                 if event.type == pygame.KEYDOWN:
@@ -376,6 +386,9 @@ class Game():
                 for row in grid:
                     for cell in row:
                         if cell.is_in_range(x=mouse_position[0], y=mouse_position[1]) and not cell.is_start_node and not cell.is_end_node and cell not in highlighted_cells:
+                            if (cell.is_walkable and drawing_type == 0) or (not cell.is_walkable and drawing_type == 1):
+                                continue
+                            
                             cell.is_walkable = not cell.is_walkable
                             if cell.is_walkable:
                                 Superior.number_of_undiscovered += 1
