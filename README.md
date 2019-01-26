@@ -1,3 +1,4 @@
+# A* pathfinding algoritm in pygame
 This is my implementation of A* pathfinding algorithm in pygame. You can download it and try it by yourself, all you need to do is install pygame.
 
 ### There are 4 stages in game: 
